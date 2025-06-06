@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 
@@ -29,26 +30,36 @@ public class RentalController {
 
 
     @PostMapping("/rent")
-    public ResponseEntity<Rental> rentVehicle(@RequestBody RentalRequest rentalRequest) {
-        if (rentalRequest.vehicleId == null || rentalRequest.userId == null) {
+    public ResponseEntity<Rental> rentVehicle(@RequestBody RentalRequest rentalRequest, Principal principal) {
+        if (rentalRequest.vehicleId == null) {
             return ResponseEntity.badRequest().build();
         }
         try {
-            Rental rental = rentalService.rent(rentalRequest.vehicleId, rentalRequest.userId);
+            String username = principal.getName();
+            Rental rental = rentalService.rent(rentalRequest.vehicleId, username);
             return ResponseEntity.status(HttpStatus.CREATED).body(rental);
         } catch (Exception e) {
+            e.printStackTrace(); // TODO usunac jak znajde jak naprawic
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
 
     @PostMapping("/return")
-    public ResponseEntity<Void> returnVehicle(@RequestBody RentalRequest rentalRequest) {
-        boolean success = rentalService.returnRental(rentalRequest.vehicleId, rentalRequest.userId);
-        if (success) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    public ResponseEntity<Void> returnVehicle(@RequestBody RentalRequest rentalRequest, Principal principal) {
+        if (rentalRequest.vehicleId == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            String username = principal.getName();
+            boolean success = rentalService.returnRental(rentalRequest.vehicleId, username);
+            if (success) {
+                return ResponseEntity.ok().build();
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
     @GetMapping

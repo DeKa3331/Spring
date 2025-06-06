@@ -48,16 +48,14 @@ public class RentalServiceImpl implements RentalService {
     }
     @Override
     @Transactional
-    public Rental rent(String vehicleId, String userId) {
+    public Rental rent(String vehicleId, String username) {
         if (!vehicleService.isAvailable(vehicleId)) {
             throw new IllegalStateException("Vehicle " + vehicleId + " is not available for rent.");
         }
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new EntityNotFoundException("Vehicle consistency error. ID: " + vehicleId));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> {
-                    return new EntityNotFoundException("User not found with ID: " + userId);
-                });
+        User user = userRepository.findByLogin(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with login: " + username));
         Rental newRental = Rental.builder()
                 .id(UUID.randomUUID().toString())
                 .vehicle(vehicle)
